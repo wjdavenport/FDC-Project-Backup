@@ -1,0 +1,35 @@
+.DS_Store
+*.swp
+.Rhistory
+.RData
+.Rproj.user/
+
+# Python
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+env/
+source/
+
+# Project-specific large and derived data
+Data downloads/
+Datasets/
+consciousness-ezr/data/
+Snippets/*.csv
+Bibliographic test/Programatic conversion attempts/*,csv
+
+# Archives and large docs remaining unversioned
+*.zip
+*.medline
+*.pdf
+*.docx
+
+!Datasets/README.md
+!Datasets/sample_10_rows.csv
+
+# Models/artifacts
+counsciousness-ezr/models/
+*.joblib
