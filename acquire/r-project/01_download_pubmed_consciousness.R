@@ -1,0 +1,193 @@
+# Minimal PubMed MEDLINE downloader (consciousness, 1843–2025)
+
+# Optional: NCBI key and registered NCBI email in ~/.Renviron
+api_key <- Sys.getenv("NCBI_API_KEY")  # "" if not set
+ncbi_email <- Sys.getenv("NCBI_EMAIL")  # registered with NCBI for API use
+# quick sanity check + masked print
+stopifnot(nzchar(ncbi_email))
+cat("Using email:", sub("(.{3}).+(@.*)", "\\1***\\2", ncbi_email), "\n")
+
+library(httr)
+library(jsonlite)
+library(digest)
+
+BASE <- "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+TERM <- "consciousness"
+MINDATE <- 1843
+MAXDATE <- 2025
+
+out_dir <- "/Users/williamjdavenport/Documents/Education/UI CS MCS Online/2025 Fall/CS 598 Foundations of Data Curation/Project/Data downloads/data_raw"
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+outfile <- file.path(out_dir, sprintf("pubmed_consciousness_%d-%d.medline", MINDATE, MAXDATE))
+if (file.exists(outfile)) file.remove(outfile)
+
+common_params <- list(tool="wjdfdc_pubmed_dl", email=ncbi_email)
+if (nchar(api_key)) common_params$api_key <- api_key
+
+## 1) ESEARCH with history to get count + WebEnv/query_key
+es0 <- c(list(
+  db="pubmed", term=TERM, retmode="json",
+  datetype="pdat", mindate=MINDATE, maxdate=MAXDATE,
+  usehistory="y", retmax=0
+), common_params)
+
+cat("Querying count & history…\n")
+j0 <- GET(paste0(BASE, "esearch.fcgi"), query = es0) |>
+  content(as="text", encoding="UTF-8") |>
+  fromJSON()
+
+count <- as.integer(j0$esearchresult$count)
+# we <- j0$esearchresult$webenv
+# qk <- j0$esearchresult$querykey
+stopifnot(!is.na(count), count > 0)
+cat(sprintf("Total records: %s\n", format(count, big.mark=",")))
+
+pmids <- character(0)
+
+# 2) Helpers to avoid 10k idlist paging limits --------------------------------
+
+safe_esearch_count <- function(term, mindate, maxdate, common_params) {
+  q <- c(list(
+    db="pubmed", term=term, retmode="json",
+    datetype="pdat", mindate=mindate, maxdate=maxdate,
+    retmax=0
+  ), common_params)
+  r <- httr::RETRY("GET", paste0(BASE, "esearch.fcgi"), query=q,
+                   times=5, pause_base=1, pause_cap=8, pause_min=1)
+  httr::stop_for_status(r)
+  j <- jsonlite::fromJSON(httr::content(r, as="text", encoding="UTF-8"))
+  as.integer(j$esearchresult$count)
+}
+
+fetch_ids_once <- function(term, mindate, maxdate, retmax, common_params) {
+  q <- c(list(
+    db="pubmed", term=term, retmode="json",
+    datetype="pdat", mindate=mindate, maxdate=maxdate,
+    retstart=0, retmax=retmax
+  ), common_params)
+  r <- httr::RETRY("GET", paste0(BASE, "esearch.fcgi"), query=q,
+                   times=5, pause_base=1, pause_cap=8, pause_min=1)
+  httr::stop_for_status(r)
+  txt <- httr::content(r, as="text", encoding="UTF-8")
+  if (!grepl("^\\s*\\{", txt)) stop("Non-JSON response fetching IDs: ", substr(txt,1,200))
+  j <- jsonlite::fromJSON(txt)
+  ids <- j$esearchresult$idlist
+  Sys.sleep(0.40)  # ~3 req/sec
+  ids
+}
+
+collect_pmids_by_date <- function(term, mindate, maxdate, limit = 9000L, common_params) {
+  cnt <- safe_esearch_count(term, mindate, maxdate, common_params)
+  message(sprintf("Range %d–%d: count=%s", mindate, maxdate, format(cnt, big.mark=",")))
+  if (cnt == 0) return(character(0))
+  if (cnt <= limit) {
+    return(fetch_ids_once(term, mindate, maxdate, retmax = cnt, common_params = common_params))
+  } else {
+    mid <- floor((mindate + maxdate) / 2)
+    left  <- collect_pmids_by_date(term, mindate, mid,  limit, common_params)
+    right <- collect_pmids_by_date(term, mid + 1, maxdate, limit, common_params)
+    return(unique(c(left, right)))
+  }
+}
+
+pmids <- collect_pmids_by_date(
+  term = TERM,
+  mindate = MINDATE,
+  maxdate = MAXDATE,
+  limit = 9000L,                 # keeps each esearch under the 10k idlist limit
+  common_params = common_params
+)
+pmids <- unique(pmids)
+cat("Total unique PMIDs collected:", length(pmids), "\n")
+if (!length(pmids)) {
+  warning("No PMIDs found for this range.")
+  # still write an empty file + manifest and return
+}
+
+# (optional but handy for resume/debug)
+saveRDS(pmids, file.path(out_dir, sprintf("pmids_consciousness_%d-%d.rds", MINDATE, MAXDATE)))
+writeLines(pmids, file.path(out_dir, sprintf("pmids_consciousness_%d-%d.txt", MINDATE, MAXDATE)))
+
+cat("Total unique PMIDs collected:", length(pmids), "\n")
+
+## 3) EFETCH MEDLINE by explicit ID batches (POST, no history)
+cat("Downloading MEDLINE by PMID batches…\n")
+ids_per <- 8000L  # conservative; can raise to 10000L
+ef_batches <- ceiling(length(pmids) / ids_per)
+
+for (i in seq_len(ef_batches)) {
+  idx <- ((i-1)*ids_per + 1) : min(length(pmids), i*ids_per)
+  ids_chunk <- pmids[idx]
+  
+  ef_params <- c(list(
+    db="pubmed", id=paste(ids_chunk, collapse=","),
+    rettype="medline", retmode="text"
+  ), common_params)
+  
+  r <- RETRY("POST", paste0(BASE, "efetch.fcgi"), body=ef_params, encode="form",
+             times=5, pause_base=1, pause_cap=8, pause_min=1)
+  stop_for_status(r)
+  txt <- content(r, as="text", encoding="UTF-8")
+  
+  cat(txt, file=outfile, append=TRUE)
+  Sys.sleep(0.40)  # ~3 req/sec
+  cat(sprintf("  [%d/%d] wrote (~%s chars)\n", i, ef_batches, format(nchar(txt), big.mark=",")))
+}
+
+# count records written (PMID lines)
+recs_written <- sum(grepl("^PMID-\\s", readLines(outfile, warn = FALSE)))
+cat("Records in MEDLINE file:", recs_written, "\n")
+
+# ---- 4) Manifest + run log after efetch loop ----
+
+t_end <- Sys.time()
+
+# base manifest
+man <- list(
+  term = TERM,
+  mindate = MINDATE,
+  maxdate = MAXDATE,
+  total_count = count,
+  pmids_written = length(pmids),
+  file = outfile
+)
+
+# extras
+qt <- tryCatch(j0$esearchresult$querytranslation, error = function(e) NA_character_)
+man$querytranslation  <- qt
+man$file_bytes        <- file.info(outfile)$size
+man$sha256            <- digest(outfile, algo = "sha256", file = TRUE)
+man$ids_per           <- ids_per
+man$api_key_present   <- nchar(api_key) > 0
+man$tool              <- common_params$tool
+man$email             <- common_params$email
+man$generated_at      <- as.character(t_end)
+
+# distinct manifest filename (range + timestamp)
+manifest_path <- file.path(
+  out_dir,
+  sprintf("download_manifest_%d-%d_%s.json",
+          MINDATE, MAXDATE, format(t_end, "%Y%m%dT%H%M%S"))
+)
+writeLines(jsonlite::toJSON(man, auto_unbox = TRUE, pretty = TRUE), manifest_path)
+
+# append a one-row CSV run log (lives one level up from data_raw/)
+log_path <- file.path(dirname(out_dir), "download_runs_log.csv")
+log_row <- data.frame(
+  mindate = MINDATE,
+  maxdate = MAXDATE,
+  total_count = count,
+  pmids_written = length(pmids),
+  outfile = normalizePath(outfile),
+  bytes = man$file_bytes,
+  sha256 = man$sha256,
+  generated_at = man$generated_at,
+  stringsAsFactors = FALSE
+)
+if (!file.exists(log_path)) {
+  write.table(log_row, log_path, sep = ",", row.names = FALSE, col.names = TRUE)
+} else {
+  write.table(log_row, log_path, sep = ",", row.names = FALSE, col.names = FALSE, append = TRUE)
+}
+
+cat("\nDone. Saved:", outfile, "\nManifest:", manifest_path, "\n")

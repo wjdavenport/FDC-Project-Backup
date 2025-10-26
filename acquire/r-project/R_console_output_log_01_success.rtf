@@ -1,0 +1,245 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 > # Minimal PubMed MEDLINE downloader (consciousness, 1843\'962025)\
+> \
+> # Optional: NCBI key and registered NCBI email in ~/.Renviron\
+> api_key <- Sys.getenv("NCBI_API_KEY")  # "" if not set\
+> ncbi_email <- Sys.getenv("NCBI_EMAIL")  # registered with NCBI for API use\
+> # quick sanity check + masked print\
+> stopifnot(nzchar(ncbi_email))\
+> cat("Using email:", sub("(.\{3\}).+(@.*)", "\\\\1***\\\\2", ncbi_email), "\\n")\
+Using email: jep***@gmail.com \
+> \
+> library(httr)\
+> library(jsonlite)\
+> library(digest)\
+> \
+> BASE <- "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"\
+> TERM <- "consciousness"\
+> MINDATE <- 1843\
+> MAXDATE <- 2025\
+> \
+> out_dir <- "/Users/williamjdavenport/Documents/Education/UI CS MCS Online/2025 Fall/CS 598 Foundations of Data Curation/Project/Data downloads/data_raw"\
+> dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)\
+> outfile <- file.path(out_dir, sprintf("pubmed_consciousness_%d-%d.medline", MINDATE, MAXDATE))\
+> if (file.exists(outfile)) file.remove(outfile)\
+> \
+> common_params <- list(tool="wjdfdc_pubmed_dl", email=ncbi_email)\
+> if (nchar(api_key)) common_params$api_key <- api_key\
+> \
+> ## 1) ESEARCH with history to get count + WebEnv/query_key\
+> es0 <- c(list(\
++   db="pubmed", term=TERM, retmode="json",\
++   datetype="pdat", mindate=MINDATE, maxdate=MAXDATE,\
++   usehistory="y", retmax=0\
++ ), common_params)\
+> \
+> cat("Querying count & history\'85\\n")\
+Querying count & history\'85\
+> j0 <- GET(paste0(BASE, "esearch.fcgi"), query = es0) |>\
++   content(as="text", encoding="UTF-8") |>\
++   fromJSON()\
+> \
+> count <- as.integer(j0$esearchresult$count)\
+> # we <- j0$esearchresult$webenv\
+> # qk <- j0$esearchresult$querykey\
+> stopifnot(!is.na(count), count > 0)\
+> cat(sprintf("Total records: %s\\n", format(count, big.mark=",")))\
+Total records: 65,832\
+> \
+> pmids <- character(0)\
+> \
+> # 2) Helpers to avoid 10k idlist paging limits --------------------------------\
+> \
+> safe_esearch_count <- function(term, mindate, maxdate, common_params) \{\
++   q <- c(list(\
++     db="pubmed", term=term, retmode="json",\
++     datetype="pdat", mindate=mindate, maxdate=maxdate,\
++     retmax=0\
++   ), common_params)\
++   r <- httr::RETRY("GET", paste0(BASE, "esearch.fcgi"), query=q,\
++                    times=5, pause_base=1, pause_cap=8, pause_min=1)\
++   httr::stop_for_status(r)\
++   j <- jsonlite::fromJSON(httr::content(r, as="text", encoding="UTF-8"))\
++   as.integer(j$esearchresult$count)\
++ \}\
+> \
+> fetch_ids_once <- function(term, mindate, maxdate, retmax, common_params) \{\
++   q <- c(list(\
++     db="pubmed", term=term, retmode="json",\
++     datetype="pdat", mindate=mindate, maxdate=maxdate,\
++     retstart=0, retmax=retmax\
++   ), common_params)\
++   r <- httr::RETRY("GET", paste0(BASE, "esearch.fcgi"), query=q,\
++                    times=5, pause_base=1, pause_cap=8, pause_min=1)\
++   httr::stop_for_status(r)\
++   txt <- httr::content(r, as="text", encoding="UTF-8")\
++   if (!grepl("^\\\\s*\\\\\{", txt)) stop("Non-JSON response fetching IDs: ", substr(txt,1,200))\
++   j <- jsonlite::fromJSON(txt)\
++   ids <- j$esearchresult$idlist\
++   Sys.sleep(0.40)  # ~3 req/sec\
++   ids\
++ \}\
+> \
+> collect_pmids_by_date <- function(term, mindate, maxdate, limit = 9000L, common_params) \{\
++   cnt <- safe_esearch_count(term, mindate, maxdate, common_params)\
++   message(sprintf("Range %d\'96%d: count=%s", mindate, maxdate, format(cnt, big.mark=",")))\
++   if (cnt == 0) return(character(0))\
++   if (cnt <= limit) \{\
++     return(fetch_ids_once(term, mindate, maxdate, retmax = cnt, common_params = common_params))\
++   \} else \{\
++     mid <- floor((mindate + maxdate) / 2)\
++     left  <- collect_pmids_by_date(term, mindate, mid,  limit, common_params)\
++     right <- collect_pmids_by_date(term, mid + 1, maxdate, limit, common_params)\
++     return(unique(c(left, right)))\
++   \}\
++ \}\
+> \
+> pmids <- collect_pmids_by_date(\
++   term = TERM,\
++   mindate = MINDATE,\
++   maxdate = MAXDATE,\
++   limit = 9000L,                 # keeps each esearch under the 10k idlist limit\
++   common_params = common_params\
++ )\
+Range 1843\'962025: count=65,832\
+Range 1843\'961934: count=29\
+Range 1935\'962025: count=65,803\
+Range 1935\'961980: count=3,854\
+Range 1981\'962025: count=61,949\
+Range 1981\'962003: count=14,997\
+Range 1981\'961992: count=5,897\
+Range 1993\'962003: count=9,100\
+Range 1993\'961998: count=4,327\
+Range 1999\'962003: count=4,773\
+Range 2004\'962025: count=46,982\
+Range 2004\'962014: count=17,130\
+Range 2004\'962009: count=7,923\
+Range 2010\'962014: count=9,384\
+Range 2010\'962012: count=5,271\
+Range 2013\'962014: count=4,391\
+Range 2015\'962025: count=30,197\
+Range 2015\'962020: count=14,324\
+Range 2015\'962017: count=6,765\
+Range 2018\'962020: count=7,974\
+Range 2021\'962025: count=16,393\
+Range 2021\'962023: count=10,323\
+Range 2021\'962022: count=6,974\
+Range 2023\'962023: count=3,829\
+Range 2024\'962025: count=6,618\
+> pmids <- unique(pmids)\
+> cat("Total unique PMIDs collected:", length(pmids), "\\n")\
+Total unique PMIDs collected: 65832 \
+> if (!length(pmids)) \{\
++   warning("No PMIDs found for this range.")\
++   # still write an empty file + manifest and return\
++ \}\
+> \
+> # (optional but handy for resume/debug)\
+> saveRDS(pmids, file.path(out_dir, sprintf("pmids_consciousness_%d-%d.rds", MINDATE, MAXDATE)))\
+> writeLines(pmids, file.path(out_dir, sprintf("pmids_consciousness_%d-%d.txt", MINDATE, MAXDATE)))\
+> \
+> cat("Total unique PMIDs collected:", length(pmids), "\\n")\
+Total unique PMIDs collected: 65832 \
+> \
+> ## 3) EFETCH MEDLINE by explicit ID batches (POST, no history)\
+> cat("Downloading MEDLINE by PMID batches\'85\\n")\
+Downloading MEDLINE by PMID batches\'85\
+> ids_per <- 8000L  # conservative; can raise to 10000L\
+> ef_batches <- ceiling(length(pmids) / ids_per)\
+> \
+> for (i in seq_len(ef_batches)) \{\
++   idx <- ((i-1)*ids_per + 1) : min(length(pmids), i*ids_per)\
++   ids_chunk <- pmids[idx]\
++   \
++   ef_params <- c(list(\
++     db="pubmed", id=paste(ids_chunk, collapse=","),\
++     rettype="medline", retmode="text"\
++   ), common_params)\
++   \
++   r <- RETRY("POST", paste0(BASE, "efetch.fcgi"), body=ef_params, encode="form",\
++              times=5, pause_base=1, pause_cap=8, pause_min=1)\
++   stop_for_status(r)\
++   txt <- content(r, as="text", encoding="UTF-8")\
++   \
++   cat(txt, file=outfile, append=TRUE)\
++   Sys.sleep(0.40)  # ~3 req/sec\
++   cat(sprintf("  [%d/%d] wrote (~%s chars)\\n", i, ef_batches, format(nchar(txt), big.mark=",")))\
++ \}\
+  [1/9] wrote (~15,276,871 chars)\
+  [2/9] wrote (~20,299,136 chars)\
+  [3/9] wrote (~22,517,944 chars)\
+  [4/9] wrote (~23,235,374 chars)\
+  [5/9] wrote (~28,206,937 chars)\
+  [6/9] wrote (~32,850,027 chars)\
+  [7/9] wrote (~32,851,663 chars)\
+  [8/9] wrote (~35,532,294 chars)\
+  [9/9] wrote (~7,963,156 chars)\
+> \
+> # count records written (PMID lines)\
+> recs_written <- sum(grepl("^PMID-\\\\s", readLines(outfile, warn = FALSE)))\
+> cat("Records in MEDLINE file:", recs_written, "\\n")\
+Records in MEDLINE file: 65832 \
+> \
+> # ---- 4) Manifest + run log (PUT THIS AFTER THE EFETCH LOOP) ----\
+> \
+> t_end <- Sys.time()\
+> \
+> # base manifest\
+> man <- list(\
++   term = TERM,\
++   mindate = MINDATE,\
++   maxdate = MAXDATE,\
++   total_count = count,\
++   pmids_written = length(pmids),\
++   file = outfile\
++ )\
+> \
+> # extras\
+> qt <- tryCatch(j0$esearchresult$querytranslation, error = function(e) NA_character_)\
+> man$querytranslation  <- qt\
+> man$file_bytes        <- file.info(outfile)$size\
+> man$sha256            <- digest(outfile, algo = "sha256", file = TRUE)\
+> man$ids_per           <- ids_per\
+> man$api_key_present   <- nchar(api_key) > 0\
+> man$tool              <- common_params$tool\
+> man$email             <- common_params$email\
+> man$generated_at      <- as.character(t_end)\
+> \
+> # distinct manifest filename (range + timestamp)\
+> manifest_path <- file.path(\
++   out_dir,\
++   sprintf("download_manifest_%d-%d_%s.json",\
++           MINDATE, MAXDATE, format(t_end, "%Y%m%dT%H%M%S"))\
++ )\
+> writeLines(jsonlite::toJSON(man, auto_unbox = TRUE, pretty = TRUE), manifest_path)\
+> \
+> # append a one-row CSV run log (lives one level up from data_raw/)\
+> log_path <- file.path(dirname(out_dir), "download_runs_log.csv")\
+> log_row <- data.frame(\
++   mindate = MINDATE,\
++   maxdate = MAXDATE,\
++   total_count = count,\
++   pmids_written = length(pmids),\
++   outfile = normalizePath(outfile),\
++   bytes = man$file_bytes,\
++   sha256 = man$sha256,\
++   generated_at = man$generated_at,\
++   stringsAsFactors = FALSE\
++ )\
+> if (!file.exists(log_path)) \{\
++   write.table(log_row, log_path, sep = ",", row.names = FALSE, col.names = TRUE)\
++ \} else \{\
++   write.table(log_row, log_path, sep = ",", row.names = FALSE, col.names = FALSE, append = TRUE)\
++ \}\
+> \
+> cat("\\nDone. Saved:", outfile, "\\nManifest:", manifest_path, "\\n")\
+\
+Done. Saved: /Users/williamjdavenport/Documents/Education/UI CS MCS Online/2025 Fall/CS 598 Foundations of Data Curation/Project/Data downloads/data_raw/pubmed_consciousness_1843-2025.medline \
+Manifest: /Users/williamjdavenport/Documents/Education/UI CS MCS Online/2025 Fall/CS 598 Foundations of Data Curation/Project/Data downloads/data_raw/download_manifest_1843-2025_20250927T172542.json \
+> }

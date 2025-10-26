@@ -1,0 +1,7 @@
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
+renv/cache/
+.DS_Store
