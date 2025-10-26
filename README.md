@@ -3,13 +3,16 @@ The use case for this project is to curate a dataset of publications (periodical
 
 Instructions for cloning:
 
-One-time setup on a new machine
+One-time setup on a new machine (MacOS with Brew):
+
 brew install git-lfs
 git lfs install
 
-Clone with submodules (data repo included)
+Clone with submodules (data repo included):
+
 git clone --recurse-submodules https://github.com/wjd4/FDC-Project-Backup.git
 cd FDC-Project-Backup
 
-Ensure LFS pulls the big files inside the submodule
+Ensure LFS pulls the big files inside the submodule:
+
 cd data && git lfs pull && cd ..
