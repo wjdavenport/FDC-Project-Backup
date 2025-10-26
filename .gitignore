@@ -34,3 +34,6 @@ Bibliographic test/Programatic conversion attempts/*,csv
 counsciousness-ezr/models/
 *.joblib
 *.pages
+
+# Ignore failed/parked bib experiments
+Bibliographic test/
