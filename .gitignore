@@ -37,3 +37,11 @@ counsciousness-ezr/models/
 
 # Ignore failed/parked bib experiments
 Bibliographic test/
+
+# RStudio / renv
+.Rhistory
+.Rdata
+.Rproj.user/
+renv/library/
+renv/staging/
+renv/cache/
