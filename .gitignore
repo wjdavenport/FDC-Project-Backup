@@ -24,7 +24,6 @@ Bibliographic test/Programatic conversion attempts/*,csv
 # Archives and large docs remaining unversioned
 *.zip
 *.medline
-*.pdf
 *.docx
 
 !Datasets/README.md
