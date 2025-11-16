@@ -10,7 +10,7 @@ git lfs install
 
 Clone with submodules (data repo included):
 
-git clone --recurse-submodules https://github.com/wjd4/FDC-Project-Backup.git
+git clone --recurse-submodules https://github.com/wjdavenport/FDC-Project-Backup.git
 cd FDC-Project-Backup
 
 Ensure LFS pulls the big files inside the submodule:
