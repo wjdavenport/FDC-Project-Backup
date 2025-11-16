@@ -10,15 +10,35 @@ cat("Using email:", sub("(.{3}).+(@.*)", "\\1***\\2", ncbi_email), "\n")
 library(httr)
 library(jsonlite)
 library(digest)
+library(here)  # added for relative path navigation
 
 BASE <- "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
 TERM <- "consciousness"
 MINDATE <- 1843
 MAXDATE <- 2025
 
-out_dir <- "/Users/williamjdavenport/Documents/Education/UI CS MCS Online/2025 Fall/CS 598 Foundations of Data Curation/Project/Data downloads/data_raw"
+#  --- Allow optional CLI args for directory / filename ---
+# Usage examples (from acquire/r-project as working dir):
+#   Rscript 01_download_pubmed_consciousness.R
+#   Rscript 01_download_pubmed_consciousness.R data/raw
+#   Rscript 01_download_pubmed_consciousness.R data/raw my_custom_file.medline
+args <- commandArgs(trailingOnly = TRUE)
+
+# Default output directory: data/raw (relative to project)
+out_dir <- if (length(args) >= 1) {
+  # treat first arg as a directory, relative to project root
+  here::here(args[1])
+} else {
+  here::here("data", "raw")
+}
+
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
-outfile <- file.path(out_dir, sprintf("pubmed_consciousness_%d-%d.medline", MINDATE, MAXDATE))
+
+# Default filename uses the date range; can override with 2nd arg
+default_fname <- sprintf("pubmed_consciousness_%d-%d.medline", MINDATE, MAXDATE)
+out_fname <- if (length(args) >= 2) args[2] else default_fname
+
+outfile <- file.path(out_dir, out_fname)
 if (file.exists(outfile)) file.remove(outfile)
 
 common_params <- list(tool="wjdfdc_pubmed_dl", email=ncbi_email)
