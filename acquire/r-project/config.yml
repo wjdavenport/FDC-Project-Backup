@@ -1,0 +1,12 @@
+paths:
+  raw: "data/raw"
+  intermediate: "data/intermediate"
+  clean: "data/clean"
+  models: "models"
+  metadata: "metadata"
+
+pubmed:
+  query: "consciousness[Title/Abstract] OR awareness[Title/Abstract]"
+  email: "jeptha.davenport@gmail.com"
+  tool: "cs598-fdc-project"
+
