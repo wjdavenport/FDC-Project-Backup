@@ -218,7 +218,7 @@ def main():
     print(classification_report(yte_t, pred_t, digits=3))
     print(export_text(tree2, feature_names=list(text_feat.columns)))
 
-        def export_manual_review_sample(seed_df, text_feat, proba, n=200, outpath="manual_review_sample.csv"):
+    def export_manual_review_sample(seed_df, text_feat, proba, n=200, outpath="manual_review_sample.csv"):
         """
         Export a random sample of N references for manual accuracy review.
         Includes:
@@ -227,7 +227,7 @@ def main():
         - seed label (0/1)
         - model probability for class 1
         - all boolean text-feature flags
-
+        
         Parameters
         ----------
         seed_df : pd.DataFrame
@@ -260,7 +260,7 @@ def main():
         df_sample = df_out.sample(n=min(n, len(df_out)), random_state=1073)
 
         df_sample.to_csv(outpath, index=False)
-        print(f"[manual review] Exported {len(df_sample)} rows → {outpath}")
+        print(f"[manual review] Exported {len(df_sample)} rows → {outpath}")        
 
     
     # Export manual review set (full-seed predictions)
