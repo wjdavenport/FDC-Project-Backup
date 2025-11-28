@@ -19,24 +19,87 @@ from scipy.sparse import csr_matrix, hstack
 DATA_ALL = Path(__file__).resolve().parents[1] / "data" / "exports" / "pubmed_consciousness.csv"
 SEED_CSV = Path(__file__).resolve().parents[1] / "data" / "exports" / "seed_label_batch_working_copy_06.csv"
 
-def build_text(df):
+
+def build_text(df: pd.DataFrame):
     return (df["title"].fillna("") + " \n " + df["abstract"].fillna("")).values
 
-def build_meta(df):
-    meta = df[["has_mesh_consciousness_major","has_mesh_consciousness","has_mesh_spirit_religion","n_mesh"]].fillna(0).astype(float)
+
+def build_meta(df: pd.DataFrame):
+    meta = df[
+        [
+            "has_mesh_consciousness_major",
+            "has_mesh_consciousness",
+            "has_mesh_spirit_religion",
+            "n_mesh",
+        ]
+    ].fillna(0).astype(float)
     return csr_matrix(meta.values)
+
+
+def export_seed_ranking_for_audit(
+    seed_df: pd.DataFrame,
+    text_feat: pd.DataFrame,
+    proba: np.ndarray,
+    outpath: str = "seed_model_audit.csv",
+):
+    """
+    Export all seed-labeled references, ranked for audit.
+
+    Columns:
+    - pmid, title, abstract
+    - label (original human label 0/1)
+    - model_prob (P(class 1) from LR)
+    - pred (model hard prediction at threshold 0.5)
+    - mismatch (True if pred != label)
+    - abs_margin (distance from 0.5: model's confidence)
+
+    Rows are sorted so that high-confidence mismatches appear first.
+    """
+
+    # Basic alignment checks
+    assert len(seed_df) == len(text_feat) == len(proba), \
+        "Lengths differ: seed_df, text_feat, and proba must align."
+
+    # Base table
+    df_out = pd.concat(
+        [
+            seed_df[["pmid", "title", "abstract", "label"]].reset_index(drop=True),
+            pd.Series(proba, name="model_prob"),
+            text_feat.reset_index(drop=True),
+        ],
+        axis=1,
+    )
+
+    # Hard prediction and diagnostics
+    df_out["pred"] = (df_out["model_prob"] >= 0.5).astype(int)
+    df_out["mismatch"] = df_out["pred"] != df_out["label"]
+    df_out["abs_margin"] = (df_out["model_prob"] - 0.5).abs()
+
+    # Rank: mismatches first, then most confident
+    df_out = df_out.sort_values(
+        by=["mismatch", "abs_margin"],
+        ascending=[False, False],
+    )
+
+    df_out.to_csv(outpath, index=False)
+    print(f"[audit] Exported ranked seed set → {outpath}")
+
 
 def main():
     df = pd.read_csv(DATA_ALL, low_memory=False)
 
     seed = pd.read_csv(SEED_CSV)
     seed = seed.dropna(subset=["label"])
+
     # normalize labels to 0/1
-    ok_map = {"1":1,"0":0,"true":1,"false":0,"yes":1,"no":0}
+    ok_map = {"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}
     seed = seed[
-        seed["label"].astype(str).str.strip().str.lower().isin(ok_map.keys()) | seed["label"].isin([0,1])
+        seed["label"].astype(str).str.strip().str.lower().isin(ok_map.keys())
+        | seed["label"].isin([0, 1])
     ]
-    seed["label"] = seed["label"].astype(str).str.strip().str.lower().map(ok_map).astype(int)
+    seed["label"] = (
+        seed["label"].astype(str).str.strip().str.lower().map(ok_map).astype(int)
+    )
 
     # Join to get text/meta columns
     seed = seed.merge(df, on=["pmid"], suffixes=("", "_all"), how="left")
@@ -46,11 +109,13 @@ def main():
     X_meta = build_meta(seed)
     y = seed["label"].values
 
-    tfidf = TfidfVectorizer(ngram_range=(1,2), min_df=3, max_df=0.95)
+    tfidf = TfidfVectorizer(ngram_range=(1, 2), min_df=3, max_df=0.95)
     X_t = tfidf.fit_transform(X_text)
     X = hstack([X_t, X_meta])
 
-    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=1073, stratify=y)
+    Xtr, Xte, ytr, yte = train_test_split(
+        X, y, test_size=0.25, random_state=1073, stratify=y
+    )
 
     # ---- Baseline: Logistic Regression ----
     lr = LogisticRegression(
@@ -58,18 +123,20 @@ def main():
         class_weight="balanced",
         solver="liblinear",
         n_jobs=1,
-        random_state=1073
+        random_state=1073,
     )
-    
+
     lr.fit(Xtr, ytr)
 
     # map vectorizer features to LR coefficients
-    meta_cols = ["has_mesh_consciousness_major",
-             "has_mesh_consciousness",
-             "has_mesh_spirit_religion",
-             "n_mesh"]
+    meta_cols = [
+        "has_mesh_consciousness_major",
+        "has_mesh_consciousness",
+        "has_mesh_spirit_religion",
+        "n_mesh",
+    ]
 
-    tf_names   = list(tfidf.get_feature_names_out())
+    tf_names = list(tfidf.get_feature_names_out())
     meta_names = [f"__META_{c}" for c in meta_cols]
 
     feat_names = np.array(tf_names + meta_names)
@@ -90,26 +157,26 @@ def main():
     print("\nTop negative n-grams (evidence for class 0):")
     for i in ix_neg:
         print(f"{feat_names[i]:40s}  {coef[i]: .4f}")
-    
+
     proba = lr.predict_proba(Xte)[:, 1]         # probabilities for class 1
-    pred  = (proba >= 0.5).astype(int)          # or lr.predict(Xte)
+    pred = (proba >= 0.5).astype(int)           # or lr.predict(Xte)
 
     print("\n=== Logistic Regression ===")
     print(classification_report(yte, pred, digits=3))
 
     if len(set(yte)) == 2:                      # both classes present
         roc = roc_auc_score(yte, proba)
-        ap  = average_precision_score(yte, proba)
+        ap = average_precision_score(yte, proba)
         print(f"ROC AUC: {roc:.4f}")
         print(f"PR-AUC (Average Precision): {ap:.4f}")
     else:
         print("AUCs skipped (test set has a single class).")
 
-    # For plot later:
+    # For plot later (not used yet, but kept for convenience)
     prec, rec, thr = precision_recall_curve(yte, proba)
 
     # Tiny, interpretable text-feature tree
-    def boolean_text_features(df):
+    def boolean_text_features(df_local: pd.DataFrame) -> pd.DataFrame:
         """
         Build a compact, interpretable set of boolean text features capturing:
         - Generic consciousness-related terms
@@ -123,7 +190,11 @@ def main():
         """
 
         # Canonical lowercased text (title + abstract)
-        txt = (df["title"].fillna("") + "\n" + df["abstract"].fillna("")).str.lower()
+        txt = (
+            df_local["title"].fillna("")
+            + "\n"
+            + df_local["abstract"].fillna("")
+        ).str.lower()
 
         # Base generic / clinical features
         base_patterns = {
@@ -136,15 +207,12 @@ def main():
             "mentions_locked_in":           r"\blocked-?in\b",
             "mentions_sedation":            r"\bsedat|\bpropofol|\bmidazolam",
             "mentions_arousal":             r"\barousal\b|\bwakeful",
-
             "mentions_neural":              r"\b(neural|neuron|neuronal|connectiv)",
-
             "mentions_philosophy":          r"\bphilosoph",
             "mentions_qualia":              r"\bqualia\b",
             "mentions_subjective":          r"\bsubjective\b|\bsubjectivity\b",
             "mentions_phenomenology":       r"\bphenomenolog",
             "mentions_report":              r"\breport\b|\breportability\b",
-
             "mentions_religion":            r"\b(religio|spiritu)",
         }
 
@@ -197,20 +265,30 @@ def main():
             feat_dict[name] = txt.str.contains(pattern, regex=True, na=False)
 
         # Length-based feature
-        feat_dict["len_abstract_over_250"] = df["abstract"].fillna("").str.len() > 250
+        feat_dict["len_abstract_over_250"] = (
+            df_local["abstract"].fillna("").str.len() > 250
+        )
 
         return pd.DataFrame(feat_dict).astype(int)
-
 
     # Build the compact text-feature frame on the same seed subset:
     text_feat = boolean_text_features(seed)
     Xtr_t, Xte_t, ytr_t, yte_t = train_test_split(
-        text_feat, seed["label"].astype(int),
-        test_size=0.25, random_state=1073, stratify=seed["label"].astype(int)
+        text_feat,
+        seed["label"].astype(int),
+        test_size=0.25,
+        random_state=1073,
+        stratify=seed["label"].astype(int),
     )
 
     from sklearn.tree import DecisionTreeClassifier, export_text
-    tree2 = DecisionTreeClassifier(max_depth=3, min_samples_leaf=10, class_weight="balanced", random_state=1073)
+
+    tree2 = DecisionTreeClassifier(
+        max_depth=3,
+        min_samples_leaf=10,
+        class_weight="balanced",
+        random_state=1073,
+    )
     tree2.fit(Xtr_t, ytr_t)
     pred_t = tree2.predict(Xte_t)
 
@@ -221,85 +299,33 @@ def main():
     # ---- Ranked audit view of ALL seed labels ----
     # Use LR probabilities for the *full* seed set (not just the test split)
     lr_proba_full = lr.predict_proba(X)[:, 1]
-
     export_seed_ranking_for_audit(
         seed_df=seed,
         text_feat=text_feat,
         proba=lr_proba_full,
-        outpath="seed_model_audit.csv"
+        outpath="seed_model_audit.csv",
     )
 
-
-    def export_seed_ranking_for_audit(seed_df, text_feat, proba, outpath="seed_model_audit.csv"):
-        """
-        Export all seed-labeled references, ranked for audit.
-
-        Columns:
-        - pmid, title, abstract
-        - label (original human label 0/1)
-        - model_prob (P(class 1) from LR)
-        - pred (model hard prediction at threshold 0.5)
-        - mismatch (True if pred != label)
-        - abs_margin (distance from 0.5: model's confidence)
-
-        Rows are sorted so that high-confidence mismatches appear first.
-        """
-
-        # Basic alignment checks
-        assert len(seed_df) == len(text_feat) == len(proba), \
-            "Lengths differ: seed_df, text_feat, and proba must align."
-
-        # Base table
-        df_out = pd.concat(
-            [
-                seed_df[["pmid", "title", "abstract", "label"]].reset_index(drop=True),
-                pd.Series(proba, name="model_prob"),
-                text_feat.reset_index(drop=True),
-            ],
-            axis=1
-        )
-
-        # Hard prediction and diagnostics
-        df_out["pred"] = (df_out["model_prob"] >= 0.5).astype(int)
-        df_out["mismatch"] = df_out["pred"] != df_out["label"]
-        df_out["abs_margin"] = (df_out["model_prob"] - 0.5).abs()
-
-        # Rank: mismatches first, then most confident
-        df_out = df_out.sort_values(
-            by=["mismatch", "abs_margin"],
-            ascending=[False, False]
-        )
-
-        df_out.to_csv(outpath, index=False)
-        print(f"[audit] Exported ranked seed set → {outpath}")
-       
-
-    
-    # Export manual review set (full-seed predictions)
-    # Probabilities for all seed rows, not only the test subset.
-    lr_proba_full = lr.predict_proba(X)[:, 1]
-
-    export_manual_review_sample(
-        seed_df=seed,
-        text_feat=text_feat,
-        proba=lr_proba_full,
-        n=200,
-        outpath="manual_review_sample.csv"
-    )
-
-
-
-    # ---- ezr (interpretable rules on compact meta features) ---- not used yet
-
+    # ---- ezr (interpretable rules on compact meta features) ----
     if os.getenv("RUN_EZR", "0") == "1":
         try:
             from ezr import EZR
-            meta_cols = ["has_mesh_consciousness_major","has_mesh_consciousness","has_mesh_spirit_religion","n_mesh"]
+
+            meta_cols = [
+                "has_mesh_consciousness_major",
+                "has_mesh_consciousness",
+                "has_mesh_spirit_religion",
+                "n_mesh",
+            ]
             ezr_X = seed[meta_cols].fillna(0).astype(int)
             ezr_y = seed["label"].astype(int)
 
             Xtr_e, Xte_e, ytr_e, yte_e = train_test_split(
-                ezr_X, ezr_y, test_size=0.25, random_state=1073, stratify=ezr_y
+                ezr_X,
+                ezr_y,
+                test_size=0.25,
+                random_state=1073,
+                stratify=ezr_y,
             )
 
             model = EZR()
@@ -315,7 +341,10 @@ def main():
                     print("\n=== ezr (meta-features) ===")
                     print(classification_report(yte_e, ezr_pred, digits=3))
                     if len(set(yte_e)) == 2:
-                        print(f"PR-AUC (Average Precision): {average_precision_score(yte_e, ezr_p1):.4f}")
+                        print(
+                            "PR-AUC (Average Precision): "
+                            f"{average_precision_score(yte_e, ezr_p1):.4f}"
+                        )
                 else:
                     # unknown shape -> just print rules + hard preds
                     ezr_pred = model.predict(Xte_e)
@@ -330,11 +359,16 @@ def main():
 
         except Exception as e:
             print("\n[ezr not run] Install/usage issue:", repr(e))
-            print("Tip: keep ezr features simple (booleans/ints), then print(model) to audit rules.")
+            print(
+                "Tip: keep ezr features simple (booleans/ints), "
+                "then print(model) to audit rules."
+            )
 
+    # Save main model artifacts
     Path("models").mkdir(parents=True, exist_ok=True)
     joblib.dump(tfidf, "models/tfidf.joblib")
     joblib.dump(lr, "models/lr_tfidf_meta.joblib")
+
 
 if __name__ == "__main__":
     main()
