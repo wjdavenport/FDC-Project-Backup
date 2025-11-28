@@ -17,7 +17,7 @@ from sklearn.model_selection import train_test_split
 from scipy.sparse import csr_matrix, hstack
 
 DATA_ALL = Path(__file__).resolve().parents[1] / "data" / "exports" / "pubmed_consciousness.csv"
-SEED_CSV = Path(__file__).resolve().parents[1] / "data" / "exports" / "seed_label_batch_working_copy_06.csv"
+SEED_CSV = Path(__file__).resolve().parents[1] / "data" / "exports" / "seed_label_batch_working_copy_07.csv"
 
 
 def build_text(df: pd.DataFrame):
