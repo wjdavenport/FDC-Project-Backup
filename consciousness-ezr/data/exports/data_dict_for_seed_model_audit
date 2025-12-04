@@ -58,7 +58,7 @@ Each row corresponds to a single article (identified by PMID) with:
 | `mismatch`                      | integer   | Indicator (0/1) that the prediction disagrees with the human label (`1` if `pred != label`, otherwise `0`).                     | `0`                                        |
 | `abs_margin`                    | numeric   | Absolute distance of `model_prob` from the decision boundary (e.g., `abs(model_prob - 0.5)`), used to quantify prediction confidence. | `0.32`                               |
 
-**General notes:**
+Notes:
 
 - All `mentions_...` columns are binary features (0/1) derived by simple string matching over the title and abstract.
 - `label`, `model_prob`, `pred`, `mismatch`, and `abs_margin` together support model auditing and error analysis (e.g., examining high-confidence errors vs. low-confidence decisions).
