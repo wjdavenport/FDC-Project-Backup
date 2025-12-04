@@ -29,8 +29,6 @@ The authoritative MEDLINE file use in this project is located at:
 
 ```data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline```
 
-This submodule contains only raw source data and checksums.  No derived data is committed to the data repository.
-
 Derived CSV Output:
 The script ```consciousness-ezr/scripts/01_export_pubmed_csv.py``` converts the MEDLINE file into a structured CSV suitable for downstream processing.  It reads from the raw MEDLINE file in the submodule and writes the derived CSV to: ```consciousness-ezr/data/exports/pubmed_consciousness.csv.```  This CSV (~111 MB) is not stored in version control.
 
