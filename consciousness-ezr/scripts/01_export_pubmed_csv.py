@@ -4,8 +4,23 @@ from pathlib import Path
 from Bio import Medline
 from tqdm import tqdm
 
-IN_PATH  = Path("../data/pubmed_consciousness_1843-2025.medline")
-OUT_CSV  = Path("../data/exports/pubmed_consciousness.csv")
+# Directory containing this script: .../FDC-Project-Backup/consciousness-ezr
+SCRIPT_DIR = Path(__file__).resolve().parent
+# Repository root: .../FDC-Project-Backup
+REPO_ROOT = SCRIPT_DIR.parent
+
+# RAW MEDLINE input lives in the data submodule:
+#   FDC-Project-Backup/data/raw/2025-09-27_pubmed_consciousness/...
+IN_PATH = (
+    REPO_ROOT
+    / "data"
+    / "raw"
+    / "2025-09-27_pubmed_consciousness"
+    / "pubmed_consciousness_1843-2025.medline"
+)
+
+# Write the derived CSV into the analysis repo, not into the data submodule.
+OUT_CSV = SCRIPT_DIR / "derived" / "pubmed_consciousness.csv"
 OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 
 mesh_keep = {"Consciousness", "Awareness", "Consciousness Disorders"}
