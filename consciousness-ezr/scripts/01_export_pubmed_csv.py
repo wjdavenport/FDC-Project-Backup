@@ -4,27 +4,40 @@ from pathlib import Path
 from Bio import Medline
 from tqdm import tqdm
 
-# Directory containing this script: .../FDC-Project-Backup/consciousness-ezr
+# Directory containing this script:
+#   .../Project/consciousness-ezr/scripts
 SCRIPT_DIR = Path(__file__).resolve().parent
-# Repository root: .../FDC-Project-Backup
-REPO_ROOT = SCRIPT_DIR.parent
 
-# RAW MEDLINE input lives in the data submodule:
-#   FDC-Project-Backup/data/raw/2025-09-27_pubmed_consciousness/...
+# Root of the consciousness-ezr project:
+#   .../Project/consciousness-ezr
+EZR_ROOT = SCRIPT_DIR.parent
+
+# Root of the whole FDC project:
+#   .../Project
+PROJECT_ROOT = EZR_ROOT.parent
+
+# 1) RAW MEDLINE INPUT (root-level data submodule)
+#    .../Project/data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline
 IN_PATH = (
-    REPO_ROOT
+    PROJECT_ROOT
     / "data"
     / "raw"
     / "2025-09-27_pubmed_consciousness"
     / "pubmed_consciousness_1843-2025.medline"
 )
 
-# Write the derived CSV into the analysis repo, not into the data submodule.
-OUT_CSV = SCRIPT_DIR / "derived" / "pubmed_consciousness.csv"
+# 2) DERIVED CSV (under consciousness-ezr/data/exports)
+#    .../Project/consciousness-ezr/data/exports/pubmed_consciousness.csv
+OUT_CSV = (
+    EZR_ROOT
+    / "data"
+    / "exports"
+    / "pubmed_consciousness.csv"
+)
 OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 
 mesh_keep = {"Consciousness", "Awareness", "Consciousness Disorders"}
-mesh_exclude = {"Religion", "Spirituality", "Pastoral Care"}  # tune later
+mesh_exclude = {"Religion", "Spirituality", "Pastoral Care"}
 
 def norm(s): 
     return re.sub(r"\s+", " ", s.strip()) if s else ""
