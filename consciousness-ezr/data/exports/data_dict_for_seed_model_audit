@@ -1,0 +1,65 @@
+# Data Dictionary: `seed_model_audit.csv`
+
+This file is used to **audit** the baseline classifier’s performance on a labeled subset of PubMed records.  
+Each row corresponds to a single article (identified by PMID) with:
+
+- human-assigned label(s),
+- model predictions and probabilities, and
+- a set of indicator features based on key terms or names associated with consciousness research.
+
+## Columns
+
+| Column name                     | Type      | Description                                                                                                                       | Example                                    |
+|---------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| `pmid`                          | integer   | PubMed unique identifier for the article; primary key linking back to `pubmed_consciousness.csv`.                                | `12345678`                                 |
+| `title`                         | string    | Article title as stored in PubMed/MEDLINE.                                                                                       | `The neural correlates of consciousness`   |
+| `abstract`                      | string    | Abstract text (may be empty if no abstract is available).                                                                        | `In this study we examine...`              |
+| `label`                         | integer   | **Ground-truth human label** for the baseline classifier (e.g., `1` = in-scope for consciousness; `0` = out-of-scope).          | `1`                                        |
+| `model_prob`                    | numeric   | Model-predicted probability of the positive class (e.g., probability that the article is in-scope for consciousness).           | `0.87`                                     |
+| `mentions_consciousness`        | integer   | Indicator (0/1) that the title or abstract explicitly mentions “consciousness”.                                                  | `1`                                        |
+| `mentions_awareness`            | integer   | Indicator (0/1) that the text mentions “awareness”.                                                                              | `1`                                        |
+| `mentions_anesthesia`           | integer   | Indicator (0/1) that the text mentions “anesthesia” or related terms.                                                            | `0`                                        |
+| `mentions_coma`                 | integer   | Indicator (0/1) that the text mentions “coma”.                                                                                   | `0`                                        |
+| `mentions_vegetative`           | integer   | Indicator (0/1) that the text mentions “vegetative” (e.g., vegetative state).                                                    | `0`                                        |
+| `mentions_minimally_conscious`  | integer   | Indicator (0/1) that the text mentions “minimally conscious” or “MCS”.                                                           | `0`                                        |
+| `mentions_locked_in`            | integer   | Indicator (0/1) that the text mentions “locked-in” (syndrome).                                                                   | `0`                                        |
+| `mentions_sedation`             | integer   | Indicator (0/1) that the text mentions “sedation” or sedative states.                                                            | `0`                                        |
+| `mentions_arousal`              | integer   | Indicator (0/1) that the text mentions “arousal”.                                                                                | `1`                                        |
+| `mentions_neural`               | integer   | Indicator (0/1) that the text mentions “neural”, “neuron”, “neuronal”, etc.                                                      | `1`                                        |
+| `mentions_philosophy`           | integer   | Indicator (0/1) that the text mentions “philosophy” or related philosophical terms.                                              | `0`                                        |
+| `mentions_qualia`               | integer   | Indicator (0/1) that the text mentions “qualia”.                                                                                 | `0`                                        |
+| `mentions_subjective`           | integer   | Indicator (0/1) that the text mentions “subjective” or “subjectivity”.                                                           | `1`                                        |
+| `mentions_phenomenology`        | integer   | Indicator (0/1) that the text mentions “phenomenology” or “phenomenological”.                                                   | `0`                                        |
+| `mentions_report`               | integer   | Indicator (0/1) that the text mentions “report”/“reported” in contexts relevant to report-based measures of consciousness.       | `1`                                        |
+| `mentions_religion`             | integer   | Indicator (0/1) that the text mentions “religion”, “religious”, “spirituality”, etc.                                             | `0`                                        |
+| `mentions_global_workspace`     | integer   | Indicator (0/1) for mentions of “global workspace” theory or closely related phrases.                                            | `0`                                        |
+| `mentions_iit`                  | integer   | Indicator (0/1) for mentions of “integrated information theory” or “IIT”.                                                        | `0`                                        |
+| `mentions_mind_brain_identity`  | integer   | Indicator (0/1) for mentions of “mind–brain identity” or closely related identity-theory terms.                                 | `0`                                        |
+| `mentions_orch_or`              | integer   | Indicator (0/1) for mentions of “Orch-OR” or “orchestrated objective reduction”.                                                 | `0`                                        |
+| `mentions_panpsychism`          | integer   | Indicator (0/1) for mentions of “panpsychism”.                                                                                   | `0`                                        |
+| `mentions_dualism`              | integer   | Indicator (0/1) for mentions of “dualism”, “dualistic”, etc.                                                                     | `0`                                        |
+| `mentions_monism`               | integer   | Indicator (0/1) for mentions of “monism”.                                                                                        | `0`                                        |
+| `mentions_electromagnetic`      | integer   | Indicator (0/1) for mentions of “electromagnetic” theories of consciousness.                                                     | `0`                                        |
+| `mentions_neural_correlates`    | integer   | Indicator (0/1) for mentions of “neural correlates of consciousness” or “NCC”.                                                   | `1`                                        |
+| `mentions_physicalism`          | integer   | Indicator (0/1) for mentions of “physicalism” or closely related terms.                                                          | `0`                                        |
+| `mentions_edelman`              | integer   | Indicator (0/1) that the text mentions “Edelman”.                                                                                | `0`                                        |
+| `mentions_crick`                | integer   | Indicator (0/1) that the text mentions “Crick”.                                                                                  | `0`                                        |
+| `mentions_koch`                 | integer   | Indicator (0/1) that the text mentions “Koch”.                                                                                   | `0`                                        |
+| `mentions_dennett`              | integer   | Indicator (0/1) that the text mentions “Dennett”.                                                                                | `0`                                        |
+| `mentions_baars`                | integer   | Indicator (0/1) that the text mentions “Baars”.                                                                                  | `0`                                        |
+| `mentions_mcfadden`             | integer   | Indicator (0/1) that the text mentions “McFadden”.                                                                               | `0`                                        |
+| `mentions_searle`               | integer   | Indicator (0/1) that the text mentions “Searle”.                                                                                 | `0`                                        |
+| `mentions_chalmers`             | integer   | Indicator (0/1) that the text mentions “Chalmers”.                                                                               | `0`                                        |
+| `mentions_dehaene`              | integer   | Indicator (0/1) that the text mentions “Dehaene”.                                                                                | `0`                                        |
+| `mentions_tononi`               | integer   | Indicator (0/1) that the text mentions “Tononi”.                                                                                 | `0`                                        |
+| `mentions_friston`              | integer   | Indicator (0/1) that the text mentions “Friston”.                                                                                | `0`                                        |
+| `len_abstract_over_250`         | integer   | Indicator (0/1) that the abstract length exceeds a threshold (e.g., > 250 characters or words, as defined in the code).         | `1`                                        |
+| `pred`                          | integer   | Model-predicted class label for the baseline classifier (e.g., `1` = predicted in-scope, `0` = predicted out-of-scope).         | `1`                                        |
+| `mismatch`                      | integer   | Indicator (0/1) that the prediction disagrees with the human label (`1` if `pred != label`, otherwise `0`).                     | `0`                                        |
+| `abs_margin`                    | numeric   | Absolute distance of `model_prob` from the decision boundary (e.g., `abs(model_prob - 0.5)`), used to quantify prediction confidence. | `0.32`                               |
+
+**General notes:**
+
+- All `mentions_...` columns are binary features (0/1) derived by simple string matching over the title and abstract.
+- `label`, `model_prob`, `pred`, `mismatch`, and `abs_margin` together support model auditing and error analysis (e.g., examining high-confidence errors vs. low-confidence decisions).
+- `pmid` links this audit file back to the main feature table `pubmed_consciousness.csv`.
