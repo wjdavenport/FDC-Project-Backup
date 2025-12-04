@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "4.4",
+  "identifiers": [
+    {
+      "identifier": "https://github.com/wjdavenport/FDC-Project-Backup",
+      "identifierType": "URL"
+    }
+  ],
+  "titles": [
+    {
+      "title": "PubMed Consciousness Dataset (1843–2025) – Curated MEDLINE Subset"
+    }
+  ],
+  "creators": [
+    {
+      "name": "Davenport, William J.",
+      "nameType": "Personal"
+    }
+  ],
+  "publisher": "University of Illinois Urbana-Champaign (UIUC)",
+  "publicationYear": 2025,
+  "resourceType": {
+    "resourceTypeGeneral": "Dataset",
+    "resourceType": "Curated PubMed/MEDLINE subset on consciousness"
+  },
+  "subjects": [
+    { "subject": "Consciousness" },
+    { "subject": "Neuroscience" },
+    { "subject": "Philosophy of mind" },
+    { "subject": "Medical Subject Headings (MeSH)" },
+    { "subject": "Bibliometrics" }
+  ],
+  "contributors": [
+    {
+      "contributorType": "HostingInstitution",
+      "name": "University of Illinois Urbana-Champaign"
+    },
+    {
+      "contributorType": "RightsHolder",
+      "name": "U.S. National Library of Medicine (source of original MEDLINE records)"
+    }
+  ],
+  "rightsList": [
+    {
+      "rights": "MEDLINE records © U.S. National Library of Medicine (NLM). Used under fair-use for non-commercial, educational purposes. NLM has not endorsed this application.",
+      "rightsUri": "https://www.nlm.nih.gov/databases/download.html"
+    }
+  ],
+  "descriptions": [
+    {
+      "descriptionType": "Abstract",
+      "description": "This dataset is a curated subset of PubMed/MEDLINE records related to the topic of consciousness for the date range 1843–2025. It includes basic bibliographic information (PMID, year, journal, title, abstract), MeSH terms, publication types, and several derived indicator variables for whether 'Consciousness' or related spiritual/religious topics appear in the MeSH annotation. The dataset is intended for exploratory analysis of research trends in consciousness studies and for training baseline and extended text classifiers (EZR) as part of the CS 598: Foundations of Data Curation course project at UIUC."
+    }
+  ],
+  "language": "en",
+  "version": "1.0",
+  "dates": [
+    {
+      "date": "2025-09-27",
+      "dateType": "Collected"
+    }
+  ],
+  "relatedIdentifiers": [
+    {
+      "relationType": "IsDerivedFrom",
+      "relatedIdentifier": "https://www.nlm.nih.gov/databases/download/pubmed_medline.html",
+      "relatedIdentifierType": "URL"
+    },
+    {
+      "relationType": "IsSupplementTo",
+      "relatedIdentifier": "https://github.com/wjdavenport/FDC-Project-Data",
+      "relatedIdentifierType": "URL"
+    }
+  ]
+}
