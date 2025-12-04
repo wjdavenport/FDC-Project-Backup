@@ -21,15 +21,16 @@ MAXDATE <- 2025
 # Usage examples (from acquire/r-project as working dir):
 #   Rscript 01_download_pubmed_consciousness.R
 #   Rscript 01_download_pubmed_consciousness.R data/raw
-#   Rscript 01_download_pubmed_consciousness.R data/raw my_custom_file.medline
 args <- commandArgs(trailingOnly = TRUE)
 
-# Default output directory: data/raw (relative to project)
+# Default output directory: data/raw/2025-09-27_pubmed_consciousness (relative to project root)
+default_subdir <- file.path("data", "raw", "2025-09-27_pubmed_consciousness")
+
 out_dir <- if (length(args) >= 1) {
   # treat first arg as a directory, relative to project root
   here::here(args[1])
 } else {
-  here::here("data", "raw")
+  here::here(default_subdir)
 }
 
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
