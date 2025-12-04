@@ -1,0 +1,21 @@
+# Data Dictionary: `seed_label_batch..._copy_xx.csv`
+
+This file contains one row per PubMed record retrieved for the query on “consciousness” (1843–2025).  
+Columns and their meanings are as follows:
+
+| Column name                   | Type      | Description                                                                                                   | Example                                                                                     |
+|------------------------------|-----------|---------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `pmid`                       | integer   | PubMed unique identifier for the article.                                                                     | `12345678`                                                                                   |
+| `year`                       | integer   | Publication year (four-digit year) derived from the article’s publication date.                               | `2021`                                                                                       |
+| `journal`                    | string    | Journal title (or source) as recorded in the PubMed record.                                                   | `Consciousness and Cognition`                                                                |
+| `title`                      | string    | Article title.                                                                                                | `The neural correlates of consciousness revisited`                                           |
+| `abstract`                   | string    | Abstract text concatenated into a single field; may be empty if no abstract is available.                     | `This paper examines the neural correlates of consciousness through...`                      |
+| `mesh_terms`                 | string    | All MeSH (Medical Subject Headings) terms associated with the article, typically as a delimiter-separated list (e.g., `;`-separated). | `Consciousness; Awareness; Brain Mapping`                             |
+| `pub_types`                  | string    | PubMed “Publication Type” field(s), typically as a delimiter-separated list (e.g., `;`-separated).            | `Journal Article; Review`                                                                    |
+| `has_mesh_consciousness`     | integer   | Indicator (0/1) that any MeSH term for the article includes “Consciousness”.                                  | `1` (yes) or `0` (no)                                                                        |
+| `has_mesh_consciousness_major` | integer | Indicator (0/1) that “Consciousness” appears as a **major** MeSH heading (e.g., `\*` in the MEDLINE record).  | `1` (yes) or `0` (no)                                                                        |
+| `has_mesh_spirit_religion`   | integer   | Indicator (0/1) that any MeSH term references spiritual or religious topics (e.g., contains “Spirituality”, “Religion”, etc.). | `1` (yes) or `0` (no)                                                        |
+| `n_mesh`                     | integer   | Count of MeSH terms extracted for the article.                                                                | `7`                                                                                          |
+
+Notes:
+- The indicator fields (`has_*`) are derived features based on simple pattern matching over MeSH terms and are intended for downstream classification analyses.
