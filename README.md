@@ -1,5 +1,10 @@
 # FA25 UIUC MCS Online Foundations of Data Curation Project
-The use case for this project is to curate a dataset of publications (periodical print, book, and electronic equivalents) related to the field of consciousness.  Such a database will be useful for several reasons, including allowing an analysis of current and past research efforts, organizing the field and tracking its progress, and serving as a common point of reference for future studies.
+
+This repository contains all public-shareable artifacts for a semester-long data curation project exploring the scientific literature on consciousness. The project follows the USGS Data Lifecycle Model (Plan → Acquire → Process → Analyze) and demonstrates:
+
+Ethical and policy-compliant acquisition of PubMed metadata, reproducible programmatic workflows in R and Python, manual and machine-assisted relevance labeling, development and evaluation of an interpretable classifier, provenance capture for all workflow decisions, and metadata documentation following DataCite 4.4 elements.
+
+The curated dataset derives from ~65,000 PubMed citations (1843–2025), of which a 500-record human-verified subset is used to train and evaluate a relevance classifier.
 
 Instructions for cloning:
 
