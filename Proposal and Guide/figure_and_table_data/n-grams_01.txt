@@ -1,0 +1,43 @@
+Top positive n-grams (evidence for class 1):
+__META_has_mesh_consciousness_major        1.8156
+awareness                                  1.1850
+attention                                  1.1670
+self                                       1.1040
+__META_has_mesh_consciousness              1.0556
+that                                       1.0529
+and consciousness                          0.9180
+processing                                 0.9164
+organization                               0.8908
+is                                         0.7961
+conscious                                  0.7634
+neural                                     0.7428
+we                                         0.7170
+visual                                     0.6984
+processes                                  0.6630
+adaptation                                 0.6562
+cortex                                     0.6450
+patterns that                              0.6412
+dream                                      0.6327
+dreaming                                   0.6259
+
+Top negative n-grams (evidence for class 0):
+patients                                  -1.0836
+patient                                   -0.6162
+abuse                                     -0.5297
+after                                     -0.5204
+disorders                                 -0.5068
+disorders of                              -0.4656
+seizures                                  -0.4558
+was                                       -0.3871
+case                                      -0.3855
+with                                      -0.3712
+were                                      -0.3615
+analysis                                  -0.3341
+care                                      -0.3169
+ready                                     -0.3108
+patients with                             -0.3065
+substance                                 -0.3041
+medicine                                  -0.3018
+who                                       -0.3004
+altered                                   -0.2966
+disturbance                               -0.2916

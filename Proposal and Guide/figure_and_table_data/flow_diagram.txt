@@ -1,0 +1,81 @@
+PLAN
+  ↓
+Define scope and inclusion criteria for "consciousness"-related literature
+Estimate publication volume; outline workflow stages
+
+  • Consider ethical, legal, and policy constraints:
+        - Copyright, licensing, OA vs restricted materials
+        - Responsible use of PubMed and downloaded metadata
+  • Identify relevant data models and abstractions:
+        - Lifecycle model (USGS: Plan → Acquire → Process → Analyze)
+        - Record-centric, metadata-first modeling (schema.org/DataCite alignment)
+  • Anticipate metadata and documentation needs:
+        - Provenance logging, dataset-level metadata, codebook
+  • Address reproducibility/transparency from the outset:
+        - Scripts, directory structure, version control (Git/GitHub)
+        - Clear documentation of assumptions and decisions
+
+  ↓
+
+ACQUIRE
+  ↓
+Programmatic PubMed search (1843–2025) 
+Download selected subset with MEDLINE metadata
+
+  • Apply FAIR principles:
+        - Findable: stable identifiers, DOIs
+        - Accessible: documented retrieval procedures
+        - Interoperable: standard field mapping, UTF-8, JSON/CSV/SQLite
+        - Reusable: licensing notes, inclusion/exclusion criteria
+  • Capture provenance for acquisition:
+        - Search query strings, timestamps, API versions, counts returned
+  • Maintain documentation for ethical reuse of external data sources
+  • Compare to initial R script to similar e-search 
+  
+
+  ↓
+
+PROCESS
+  ↓
+[Stage 1: Human Labeling + Classifier Bootstrapping]
+Manually review & label 300 records
+Train Classifier v1
+Compare predictions vs. human labels
+Identify mismatches: 38/300
+Human re-review of 38 → 5 corrected
+Retrain → Classifier v2
+
+[Stage 2: Generalization Test]
+Classifier v2 labels 200 additional records
+Human overrides 16/200
+
+[Stage 3: Gold Standard Consolidation]
+Merge 300 (corrected) + 200 (corrected) = 500 human-verified samples
+Train Final Classifier (v3)
+
+  • Data modeling & abstraction considerations:
+        - Label schema, controlled vocabularies, classification conventions
+        - Use of SQL/CSV structures, normalized metadata fields
+  • Reproducibility notes:
+        - All changes logged (mismatches, corrections, overrides)
+        - Versioned scripts for labeling, training, evaluation
+
+  ↓
+
+ANALYZE
+  ↓
+Evaluate Final Classifier:
+    • AUC
+    • Confusion matrix
+    • Top positive/negative n-grams
+
+  • Transparency & Reproducibility:
+        - Archive scripts, parameters, random seeds, environment specs
+        - Provide workflow documentation linking each result to inputs
+  • Metadata and documentation:
+        - Dataset description, labeling criteria, variable definitions
+        - Provenance trail (Plan → Acquire → Process → Analyze)
+  • Dissemination & communication:
+        - GitHub repository or packaged ZIP archive
+        - Narrative project report with methods, limitations, next steps
+

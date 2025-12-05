@@ -1,0 +1,14 @@
+Table 4.  Baseline Logistic Regression Classifier Performance  
+(500 human-labeled articles; 75/25 train–test split)
+
+| Metric                               |  Value  |
+|--------------------------------------|---------|
+| Training samples                     | 375     |
+| Test samples                         | 125     |
+| Test positive rate                   |   0.20  |
+| Accuracy                             |   0.832 |
+| ROC AUC                              |   0.908 |
+| PR-AUC                               |   0.777 |
+| True positive rate (recall, class 1) |   0.760 |
+| Specificity (true negative rate)     |   0.850 |
+| Balanced accuracy                    |   0.805 |
