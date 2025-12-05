@@ -16,14 +16,9 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from scipy.sparse import csr_matrix, hstack
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-EZR_ROOT = SCRIPT_DIR.parent
-DATA_DIR = EZR_ROOT / "data"
-EXPORTS_DIR = DATA_DIR / "exports"
-LAR_DIR = DATA_DIR / "labels_and_reviews"
+DATA_ALL = Path(__file__).resolve().parents[1] / "data" / "exports" / "pubmed_consciousness.csv"
+SEED_CSV = Path(__file__).resolve().parents[1] / "data" / "exports" / "seed_label_batch_working_copy_07.csv"
 
-DATA_ALL = EXPORTS_DIR / "pubmed_consciousness.csv"
-LABELS_CSV = LAR_DIR / "full_labeled_set.csv"
 
 SCRIPT_DIR = Path(__file__).resolve().parent           # .../consciousness-ezr/scripts
 EZR_ROOT = SCRIPT_DIR.parent                           # .../consciousness-ezr
@@ -164,22 +159,21 @@ def export_unlabeled_sample_for_audit(
 def main():
     df = pd.read_csv(DATA_ALL, low_memory=False)
 
-    labels = pd.read_csv(LABELS_CSV)
-    labels = labels.dropna(subset=["label"])
+    seed = pd.read_csv(SEED_CSV)
+    seed = seed.dropna(subset=["label"])
 
     # normalize labels to 0/1
     ok_map = {"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}
-    labels = labels[
-        labels["label"].astype(str).str.strip().str.lower().isin(ok_map.keys())
-        | labels["label"].isin([0, 1])
+    seed = seed[
+        seed["label"].astype(str).str.strip().str.lower().isin(ok_map.keys())
+        | seed["label"].isin([0, 1])
     ]
-    labels["label"] = (
-        labels["label"].astype(str).str.strip().str.lower().map(ok_map).astype(int)
+    seed["label"] = (
+        seed["label"].astype(str).str.strip().str.lower().map(ok_map).astype(int)
     )
 
-    # Join labels to full feature table by pmid
-    seed = labels.merge(df, on=["pmid"], suffixes=("", "_all"), how="left")
-
+    # Join to get text/meta columns
+    seed = seed.merge(df, on=["pmid"], suffixes=("", "_all"), how="left")
 
     # Features
     X_text = build_text(seed)
