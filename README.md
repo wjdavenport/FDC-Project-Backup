@@ -75,7 +75,7 @@ Raw MEDLINE data is stored in a separate repository and included here as a git s
 
 ```data/```
 
-The authoritative MEDLINE file use in this project is located at:
+The authoritative MEDLINE file used in this project is located at:
 
 ```data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline```
 
