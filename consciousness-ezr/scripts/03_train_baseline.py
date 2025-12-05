@@ -20,6 +20,19 @@ DATA_ALL = Path(__file__).resolve().parents[1] / "data" / "exports" / "pubmed_co
 SEED_CSV = Path(__file__).resolve().parents[1] / "data" / "exports" / "seed_label_batch_working_copy_07.csv"
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent           # .../consciousness-ezr/scripts
+EZR_ROOT = SCRIPT_DIR.parent                           # .../consciousness-ezr
+DATA_DIR = EZR_ROOT / "data"                           # .../consciousness-ezr/data
+EXPORTS_DIR = DATA_DIR / "exports"                     # .../consciousness-ezr/data/exports
+MODELS_DIR = EZR_ROOT / "models"                       # .../consciousness-ezr/models
+
+AUDIT_CSV = DATA_DIR / "seed_model_audit.csv"
+UNLABELED_CSV = DATA_DIR / "unlabeled_model_sample.csv"
+METRICS_CSV = DATA_DIR / "baseline_lr_metrics.csv"
+
+
+
+
 def build_text(df: pd.DataFrame):
     return (df["title"].fillna("") + " \n " + df["abstract"].fillna("")).values
 
@@ -228,7 +241,20 @@ def main():
         print(f"ROC AUC: {roc:.4f}")
         print(f"PR-AUC (Average Precision): {ap:.4f}")
     else:
-        print("AUCs skipped (test set has a single class).")
+        print("AUC is undefined.")
+    # Save metrics to CSV for reproducibility
+    metrics = {
+        "n_train": int(len(ytr)),
+        "n_test": int(len(yte)),
+        "test_pos_rate": float(np.mean(yte)),
+        "accuracy": float((pred == yte).mean()),
+        "roc_auc": float(roc),
+        "pr_auc": float(ap),
+    }
+    METRICS_CSV.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([metrics]).to_csv(METRICS_CSV, index=False)
+    print(f"[metrics] Saved baseline LR metrics → {METRICS_CSV}")    
+
 
     # For plot later (not used yet, but kept for convenience)
     prec, rec, thr = precision_recall_curve(yte, proba)
@@ -355,23 +381,22 @@ def main():
     print(export_text(tree2, feature_names=list(text_feat.columns)))
 
     # ---- Ranked audit view of ALL seed labels ----
-    # Use LR probabilities for the *full* seed set (not just the test split)
     lr_proba_full = lr.predict_proba(X)[:, 1]
     export_seed_ranking_for_audit(
         seed_df=seed,
         text_feat=text_feat,
         proba=lr_proba_full,
-        outpath="seed_model_audit.csv",
+        outpath=str(AUDIT_CSV),
     )
 
-        # ---- External validation: sample UNLABELED references for manual review ----
+    # ---- External validation: sample UNLABELED references for manual review ----
     export_unlabeled_sample_for_audit(
         df_all=df,
         seed_pmids=seed["pmid"],
         model=lr,
         tfidf=tfidf,
         n=200,
-        outpath="unlabeled_model_sample.csv",
+        outpath=str(UNLABELED_CSV),
     )
 
 
@@ -435,9 +460,9 @@ def main():
             )
 
     # Save main model artifacts
-    Path("models").mkdir(parents=True, exist_ok=True)
-    joblib.dump(tfidf, "models/tfidf.joblib")
-    joblib.dump(lr, "models/lr_tfidf_meta.joblib")
+    MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    joblib.dump(tfidf, MODELS_DIR / "tfidf.joblib")
+    joblib.dump(lr, MODELS_DIR / "lr_tfidf_meta.joblib")
 
 
 if __name__ == "__main__":
