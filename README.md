@@ -6,7 +6,7 @@ Ethical and policy-compliant acquisition of PubMed metadata, reproducible progra
 
 The curated dataset derives from ~65,000 PubMed citations (1843–2025), of which a 500-record human-verified subset is used to train and evaluate a relevance classifier.
 
-Instructions for cloning:
+## Set-up Instructions for Cloning: ##
 
 One-time setup on a new machine (MacOS with Brew):
 
@@ -22,20 +22,7 @@ Ensure LFS pulls the big files inside the submodule:
 
 cd data && git lfs pull && cd ..
 
-Data Structure and Reproducibility
 
-Raw Data (Submodule: FDC-Project-Data)
-
-Raw MEDLINE data is stored in a separate repository and included here as a git submodule under:
-
-```data/```
-
-The authoritative MEDLINE file use in this project is located at:
-
-```data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline```
-
-Derived CSV Output:
-The script ```consciousness-ezr/scripts/01_export_pubmed_csv.py``` converts the MEDLINE file into a structured CSV suitable for downstream processing.  It reads from the raw MEDLINE file in the submodule and writes the derived CSV to: ```consciousness-ezr/data/exports/pubmed_consciousness.csv.```  This CSV (~111 MB) is not stored in version control.
 
 ## Step-by-Step Instructions (General Workflow) ##
 The workflow below allows any user to either fully reproduce the dataset acquisition or begin directly from stored data artifacts. All steps assume use of either RStudio (for acquisition) or Python 3.12 (for processing and analysis).
@@ -77,6 +64,23 @@ Console output and saved result files are written to
 
 5. Run the provided [jobAnalysis.ipynb](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/data/labels_and_reviews/jobAnalysis.ipynb) script by clicking 'Open in Colab' script and environment from withing Google Colab.  You will need to drag 2 files into the Colab file space (top directory level) to run the analysis.  Those 2 files are created on running the current classifier, or current copies at time of report can be found at [https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/models/lr_tfidf_meta.joblib](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/models/lr_tfidf_meta.joblib) and  
 [https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/models/tfidf.joblib](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/models/tfidf.joblib)
+
+## Notes ##
+
+Data Structure and Reproducibility
+
+Raw Data (Submodule: FDC-Project-Data)
+
+Raw MEDLINE data is stored in a separate repository and included here as a git submodule under:
+
+```data/```
+
+The authoritative MEDLINE file use in this project is located at:
+
+```data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline```
+
+Derived CSV Output:
+The script ```consciousness-ezr/scripts/01_export_pubmed_csv.py``` converts the MEDLINE file into a structured CSV suitable for downstream processing.  It reads from the raw MEDLINE file in the submodule and writes the derived CSV to: ```consciousness-ezr/data/exports/pubmed_consciousness.csv.```  This CSV (~111 MB) is not stored in version control.
 
 Note on copyright:  data placed in this repository originates in part from the National Library of Medicine (NLM) (https://www.nlm.nih.gov/databases/download.html).  NLM has not endorsed this application; this application does not reflect the most current/accurate data from NLM.  The manager of this repository believes that the data herein are shared in the manner of fair use, where the use is for nonprofit educational purposes.
 
