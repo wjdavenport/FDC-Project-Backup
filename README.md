@@ -34,3 +34,9 @@ The script ```consciousness-ezr/scripts/01_export_pubmed_csv.py``` converts the 
 
 
 Note on copyright:  data placed in this repository originates in part from the National Library of Medicine (NLM) (https://www.nlm.nih.gov/databases/download.html).  NLM has not endorsed this application; this application does not reflect the most current/accurate data from NLM.  The manager of this repository believes that the data herein are shared in the manner of fair use, where the use is for nonprofit educational purposes.
+
+Version information:
+R: Version 4.4.1, R Core Team (2024). _R: A Language and Environment for Statistical
+  Computing_. R Foundation for Statistical Computing, Vienna, Austria. https://www.R-project.org
+RStudio: Version 2024.09.1+394 (2024.09.1+394), Posit team (2024). RStudio: Integrated Development Environment for R. Posit Software, PBC, Boston, MA. URL http://www.posit.co/
+Python: Version 3.12.2, Python Software Foundation. (2024). https://www.python.org
