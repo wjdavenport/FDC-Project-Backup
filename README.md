@@ -25,11 +25,11 @@ cd data && git lfs pull && cd ..
 
 
 ## Step-by-Step Instructions (General Workflow) ##
-The workflow below allows any user to either fully reproduce the dataset acquisition or begin directly from stored data artifacts. All steps assume use of either RStudio (for acquisition) or Python 3.12 (for processing and analysis).
+The workflow below allows any user to either fully reproduce the dataset acquisition or begin directly from stored data artifacts. All steps assume use of either RStudio (for acquisition) or Python 3.12 (for processing and analysis).  Because all steps have been run already and output is captured, a user may choose to begin at any steps using pre-generated inputs as specified.
 
-1. (Optional) Reproduce the PubMed Metadata Download
+1.  Reproduce the PubMed Metadata Download:
 To regenerate the raw MEDLINE file for a date range of your choice:
-1. Open RStudio and run the acquisition script:
+   Open RStudio and run the acquisition script:
 [acquire/r-project/scripts/01_download_pubmed_consciousness.R](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/acquire/r-project/scripts/01_download_pubmed_consciousness.R)
 This script retrieves PubMed records using NCBI E-utilities and writes a MEDLINE file such as:
 pubmed_consciousness_1843-2025.medline.
@@ -37,13 +37,13 @@ Alternatively, to skip acquisition and use the project's archived version, downl
 [data/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline](https://github.com/wjdavenport/FDC-Project-Data/blob/main/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness_1843-2025.medline)
 (from the FDC-Project-Data repository).  Please note that you will likely receive a big file notice.
 
-2. Convert MEDLINE to CSV
+2. Convert MEDLINE to CSV: 
 Using Python, run the first processing script:
 [consciousness-ezr/scripts/01_export_pubmed_csv.py](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/scripts/01_export_pubmed_csv.py)
 This script parses the MEDLINE file and outputs a structured CSV (pubmed_consciousness.csv) containing PMIDs, titles, abstracts, MeSH terms, and derived metadata fields.
 The processed CSV is also archived in the data repository for convenience ([https://github.com/wjdavenport/FDC-Project-Data/blob/main/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness.csv](https://github.com/wjdavenport/FDC-Project-Data/blob/main/raw/2025-09-27_pubmed_consciousness/pubmed_consciousness.csv)).
 
-3. Generate or Inspect Initial Labels
+3. Generate or Inspect Initial Labels:
 Run the script:
 [consciousness-ezr/scripts/02_make_seed_labels.py](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/scripts/02_make_seed_labels.py)
 This creates an initial labeling template for manual review.
@@ -51,7 +51,7 @@ A fully curated human-labeled set of 500 records - used for classifier training 
 [consciousness-ezr/data/labels_and_reviews/full_labeled_set.csv](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/data/labels_and_reviews/full_labeled_set.csv)
 Each row contains a PMID and a binary label (1 = relevant, 0 = irrelevant), with labeling criteria documented in the Final Report.
 
-4. Train the Relevance Classifier
+4. Train the Relevance Classifier: 
 Run:
 [consciousness-ezr/scripts/03_train_baseline.py](https://github.com/wjdavenport/FDC-Project-Backup/blob/main/consciousness-ezr/scripts/03_train_baseline.py)
 This script trains an interpretable logistic regression classifier (TF-IDF features) using the human-labeled dataset. It outputs:
