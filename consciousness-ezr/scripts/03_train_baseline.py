@@ -248,6 +248,24 @@ def main():
         print(f"PR-AUC (Average Precision): {ap:.4f}")
     else:
         print("AUC is undefined.")
+
+    # ---- Confusion matrix + derived metrics ----
+    tn, fp, fn, tp = confusion_matrix(yte, pred, labels=[0, 1]).ravel()
+
+    # Derived rates
+    tpr = tp / (tp + fn) if (tp + fn) > 0 else float("nan")  # recall, class 1
+    tnr = tn / (tn + fp) if (tn + fp) > 0 else float("nan")  # specificity, class 0
+    bal_acc = (tpr + tnr) / 2 if not np.isnan(tpr + tnr) else float("nan")
+
+    print("\nConfusion matrix (rows = true, cols = pred):")
+    print(f"           pred=0  pred=1")
+    print(f"true=0     {tn:6d}  {fp:6d}")
+    print(f"true=1     {fn:6d}  {tp:6d}")
+    print(f"\nTrue positive rate (recall, class 1): {tpr:.3f}")
+    print(f"Specificity (true negative rate):      {tnr:.3f}")
+    print(f"Balanced accuracy:                     {bal_acc:.3f}")
+
+
     # Save metrics to CSV for reproducibility
     metrics = {
         "n_train": int(len(ytr)),
@@ -256,7 +274,15 @@ def main():
         "accuracy": float((pred == yte).mean()),
         "roc_auc": float(roc),
         "pr_auc": float(ap),
+        "tn": int(tn),
+        "fp": int(fp),
+        "fn": int(fn),
+        "tp": int(tp),
+        "tpr_recall": float(tpr),
+        "specificity_tnr": float(tnr),
+        "balanced_accuracy": float(bal_acc),
     }
+
     METRICS_CSV.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame([metrics]).to_csv(METRICS_CSV, index=False)
     print(f"[metrics] Saved baseline LR metrics → {METRICS_CSV}")    
