@@ -1,0 +1,2 @@
+n_train,n_test,test_pos_rate,accuracy,roc_auc,pr_auc
+375,125,0.2,0.832,0.9084000000000001,0.7765906857848036
